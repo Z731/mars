@@ -7,7 +7,9 @@ if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
     message(STATUS "CMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}")
 endif()
 
-include_directories(openssl/include)
+if(ANDROID OR MSVC)
+    include_directories(openssl/include)
+endif()
 
 add_subdirectory(comm comm)
 add_subdirectory(boot boot)

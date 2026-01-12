@@ -8,6 +8,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(Threads REQUIRED)
 find_package(ZLIB REQUIRED)
+find_package(OpenSSL REQUIRED)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -26,7 +27,10 @@ endif()
 # The binary dir name is kept unique to avoid collisions with other packages.
 add_subdirectory("${MARS_SOURCE_DIR}" "mars_build")
 
-add_executable(mars_xlog_node src/mars_xlog_node.cpp)
+add_executable(mars_xlog_node
+  src/mars_xlog_node.cpp
+  src/fastcommon_compat.c
+)
 
 target_include_directories(mars_xlog_node PRIVATE
   "${MARS_REPO_ROOT}"          # for includes like <mars/comm/...>
@@ -34,17 +38,22 @@ target_include_directories(mars_xlog_node PRIVATE
 )
 
 # Ensure XLOGGER_TAG is always defined for translation units using xlogger.
-target_compile_definitions(mars_xlog_node PRIVATE XLOGGER_TAG="\"mars_ros2\"")
+# We want the preprocessor definition to expand to a valid C string literal.
+target_compile_definitions(mars_xlog_node PRIVATE XLOGGER_TAG=\"mars_ros2\")
 
 # Mars produces static libraries via its own CMake targets.
 # Commonly needed libs: comm, xlog, mars-boost, libzstd_static.
-target_link_libraries(mars_xlog_node PRIVATE
+target_link_libraries(mars_xlog_node
   xlog
-  comm
   mars-boost
+  comm
   libzstd_static
   ZLIB::ZLIB
+  OpenSSL::Crypto
   Threads::Threads
+  # Needed due to link order + --as-needed: libshmcache depends on libfastcommon.
+  shmcache
+  fastcommon
 )
 
 ament_target_dependencies(mars_xlog_node rclcpp)
