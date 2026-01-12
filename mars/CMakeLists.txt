@@ -1,7 +1,11 @@
 cmake_minimum_required (VERSION 3.6)
 
-set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}" CACHE PATH "Installation directory" FORCE)
-message(STATUS "CMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}")
+# Mars upstream CMake forces CMAKE_INSTALL_PREFIX for standalone builds. When Mars is consumed as a
+# subproject (e.g., via ament/colcon), overriding the parent's install prefix breaks packaging.
+if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
+    set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}" CACHE PATH "Installation directory" FORCE)
+    message(STATUS "CMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}")
+endif()
 
 include_directories(openssl/include)
 
